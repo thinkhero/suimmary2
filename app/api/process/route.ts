@@ -16,8 +16,8 @@ async function summarizeText(text: string) {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OpenRouter API key is not configured');
   }
-  console.log('text')
-  console.log(text)
+  // console.log('text')
+  // console.log(text)
 
   try {
     const response = await fetch(OPENROUTER_API_URL, {
@@ -31,10 +31,10 @@ async function summarizeText(text: string) {
       body: JSON.stringify({
         model: 'deepseek/deepseek-r1-0528-qwen3-8b:free',
         messages: [
-          // {
-          //   role: 'system',
-          //   content: 'You are a helpful assistant that summarizes content. Provide concise, informative summaries that capture the key points. Format the summary with clear sections and bullet points where appropriate.'
-          // },
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that summarizes content. Provide concise, informative summaries that capture the key points. Format the summary with clear sections and bullet points where appropriate.'
+          },
           {
             role: 'user',
             content: `Please analyze and summarize the following content. Focus on the main ideas, key points, and important details. If there are any notable quotes or statistics, include them. Here's the content:\n\n${text}`
@@ -54,7 +54,8 @@ async function summarizeText(text: string) {
     }
 
     const data = await response.json();
-    
+    console.log('data')
+    console.log(data)
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response format from API');
     }
@@ -102,6 +103,8 @@ export async function POST(request: Request) {
           );
         }
         result = await summarizeText(content);
+        // console.log('result')
+        // console.log(result)
         break;
       case 'url':
         if (typeof content !== 'string') {

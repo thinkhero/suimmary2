@@ -14,10 +14,12 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState<ProcessingStep>('input');
   const [taskId, setTaskId] = useState<string | null>(null);
   const [inputType, setInputType] = useState<string>('');
+  const [summary, setSummary] = useState<string | undefined>();
 
-  const handleProcessingStart = (type: string, id: string) => {
+  const handleProcessingStart = (type: string, id: string, summary?: string) => {
     setInputType(type);
     setTaskId(id);
+    setSummary(summary);
     setCurrentStep('processing');
   };
 
@@ -29,6 +31,7 @@ export default function Home() {
     setCurrentStep('input');
     setTaskId(null);
     setInputType('');
+    setSummary(undefined);
   };
 
   return (
@@ -39,7 +42,12 @@ export default function Home() {
         {currentStep === 'input' && (
           <>
             <Hero />
-            <InputSection onProcessingStart={handleProcessingStart} />
+            <InputSection onProcessingStart={(type, id, summary) => {
+              setInputType(type);
+              setTaskId(id);
+              setSummary(summary);
+              setCurrentStep('processing');
+            }} />
           </>
         )}
         
@@ -54,6 +62,7 @@ export default function Home() {
         {currentStep === 'completed' && taskId && (
           <ResultsSection 
             taskId={taskId}
+            summary={summary}
             onStartOver={handleStartOver}
           />
         )}

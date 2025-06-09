@@ -20,7 +20,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 
 interface InputSectionProps {
-  onProcessingStart: (type: string, taskId: string) => void;
+  onProcessingStart: (type: string, taskId: string, summary?: string) => void;
 }
 
 interface ApiResponse {
@@ -82,7 +82,7 @@ export function InputSection({ onProcessingStart }: InputSectionProps) {
         toast.info(data.message || 'Processing started...');
       }
 
-      onProcessingStart(type, data.taskId);
+      onProcessingStart(type, data.taskId, data.summary);
     } catch (error) {
       console.error('Processing error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to process content');
