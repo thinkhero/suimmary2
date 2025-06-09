@@ -23,6 +23,14 @@ interface InputSectionProps {
   onProcessingStart: (type: string, taskId: string) => void;
 }
 
+interface ApiResponse {
+  summary?: string;
+  taskId: string;
+  status: 'processing' | 'completed' | 'error';
+  message?: string;
+  error?: string;
+}
+
 export function InputSection({ onProcessingStart }: InputSectionProps) {
   const [activeTab, setActiveTab] = useState('text');
   const [textContent, setTextContent] = useState('');
@@ -41,26 +49,56 @@ export function InputSection({ onProcessingStart }: InputSectionProps) {
       return;
     }
 
+    if (!content) {
+      toast.error('Please provide content to process');
+      return;
+    }
+
     setIsProcessing(true);
     
-    // Simulate API call
     try {
+      // 准备请求数据
+      const requestData: { type: string; content: string | File } = {
+        type,
+        content: content instanceof File ? await readFileAsText(content) : content
+      };
+
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, content })
+        body: JSON.stringify(requestData)
       });
-      
-      const data = await response.json();
-      onProcessingStart(type, data.taskId || 'demo-task-' + Date.now());
+
+      const data: ApiResponse = await response.json();
+
+      if (!response.ok || data.status === 'error') {
+        throw new Error(data.error || 'Failed to process content');
+      }
+
+      // 根据不同类型处理响应
+      if (type === 'text' && data.status === 'completed') {
+        toast.success('Summary generated successfully!');
+      } else {
+        toast.info(data.message || 'Processing started...');
+      }
+
+      onProcessingStart(type, data.taskId);
     } catch (error) {
-      // For demo purposes, create a mock task
-      setTimeout(() => {
-        onProcessingStart(type, 'demo-task-' + Date.now());
-      }, 500);
+      console.error('Processing error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process content');
+    } finally {
+      setIsProcessing(false);
     }
-    
-    setIsProcessing(false);
+  };
+
+  // 辅助函数：读取文件内容
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = (e) => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
   };
 
   const remainingQuota = user ? dailyLimit - quotaUsed : 3 - quotaUsed;
